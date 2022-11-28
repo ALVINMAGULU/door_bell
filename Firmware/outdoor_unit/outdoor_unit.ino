@@ -1,8 +1,12 @@
-#include "definitions.h"
+#include <esp_now.h>
+#include <WiFi.h>
+#define INTERRUPT_PIN 15
 
+uint8_t broadcastAddress[] = {0xC0, 0x49, 0xEF, 0xE4, 0x4B, 0x00};
  
  String message = "ring";
-
+ bool ring_bell;
+ 
 esp_now_peer_info_t peerInfo;
 
 
@@ -34,7 +38,7 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-  memcpy(peerInfo.peer_addr, broadcastMacAddress, 6);
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
 
@@ -45,27 +49,13 @@ void setup() {
   }
   
   attachInterrupt(INTERRUPT_PIN, ringInterrupt, FALLING);
-  /*mqttClient.onConnect(onMqttConnect);
-  mqttClient.onDisconnect(onMqttDisconnect);
-  mqttClient.onMessage(onMqttMessage);
-  
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  
-  while (WiFi.status() != WL_CONNECTED);
 
-  mqttClient.setServer(MQTT_HOST, MQTT_PORT);
-   mqttClient.connect();
-*/
 }
 
 void loop() {
   
+  //send message 
   if(ring_bell){
-    
-   // send data to indoor unit
-   esp_err_t result = esp_now_send(broadcastMacAddress, (uint8_t *) &message, sizeof(message));
-  if (result == ESP_OK) {
-        ring_bell = false;
-      }
-  } 
+    esp_now_send(broadcastAddress, (uint8_t *) &message, sizeof(message));
+    } 
 }
