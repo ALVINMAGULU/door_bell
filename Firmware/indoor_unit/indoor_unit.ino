@@ -4,18 +4,16 @@
 #include <WiFi.h>
 
 
-String message = "ringing";
-
-bool shouldPlay = false;
+bool shouldPlay;
+bool ring;
 
 XT_Wav_Class Sound(sound);
 XT_DAC_Audio_Class DacAudio(25, 0);
 
 
-bool isTouched;
 
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-  isTouched = true;
+  ring= true;
 }
 
 
@@ -31,21 +29,19 @@ void setup() {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
-
-
-
+ 
   esp_now_register_recv_cb(OnDataRecv);
-  // Register peer
+ 
 
 }
 
 void loop() {
   // play audio sound when data recievd
-  if (isTouched) {
+  if (ring) {
     DacAudio.FillBuffer();
     if (Sound.Playing == false){
       DacAudio.Play(&Sound);
-      shouldPlay = true;
+      shouldPlay = true; // prevent clip from stopping before its played
     }
       
   }
@@ -53,7 +49,7 @@ void loop() {
   // stop playing when full clip is played
   if (Sound.TimeLeft <= 100 && shouldPlay) {
         Serial.println("stopping");
-    isTouched = false;
+    ring = false;
     shouldPlay = false;
   }
 
